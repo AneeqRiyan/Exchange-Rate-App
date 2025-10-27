@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Primary Meta Tags -->
+    <title>Exchange Rate Service - ECB Reference Rates</title>
+    <meta name="title" content="Exchange Rate Service - ECB Reference Rates">
+    <meta name="description" content="Real-time currency exchange rates from European Central Bank. Convert currencies, view rates, and track popular currencies.">
+    <meta name="keywords" content="exchange rates, currency converter, ECB, euro, foreign exchange, forex">
+    <meta name="author" content="Exchange Rate Service">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://exchange-rate-service.example.com/">
+    <meta property="og:title" content="Exchange Rate Service - ECB Reference Rates">
+    <meta property="og:description" content="Real-time currency exchange rates from European Central Bank. Convert currencies, view rates, and track popular currencies.">
+    <meta property="og:image" content="/social-preview.png">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://exchange-rate-service.example.com/">
+    <meta property="twitter:title" content="Exchange Rate Service - ECB Reference Rates">
+    <meta property="twitter:description" content="Real-time currency exchange rates from European Central Bank. Convert currencies, view rates, and track popular currencies.">
+    <meta property="twitter:image" content="/social-preview.png">
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="msapplication-TileColor" content="#3b82f6">
+    
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    
+    <!-- Preload critical fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Preload critical CSS -->
+    <link rel="preload" as="style" href="/src/styles/index.css">
+    
+    <!-- CSS -->
+    <style>
+      /* Critical CSS for initial load */
+      body {
+        margin: 0;
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: #f9fafb;
+        color: #111827;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
+      #root {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      /* Loading state for initial app load */
+      .app-loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+      
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Loading fallback for initial app load -->
+    <div id="root">
+      <div class="app-loading">
+        <div class="text-center">
+          <div class="loading-spinner mb-4"></div>
+          <p>Loading Exchange Rate Service...</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- NoScript fallback -->
+    <noscript>
+      <div style="text-align: center; padding: 2rem; font-family: system-ui, sans-serif;">
+        <h1>JavaScript Required</h1>
+        <p>This application requires JavaScript to function. Please enable JavaScript in your browser settings.</p>
+        <p>You can also use our API directly at: <code>http://localhost:8080/api/exchange-rates</code></p>
+      </div>
+    </noscript>
+    
+    <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Performance monitoring (optional) -->
+    <script>
+      // Log performance metrics
+      window.addEventListener('load', () => {
+        if ('performance' in window) {
+          const perfData = window.performance.timing;
+          const loadTime = perfData.loadEventEnd - perfData.navigationStart;
+          console.log(`App loaded in ${loadTime}ms`);
+        }
+      });
+      
+      // Error tracking
+      window.addEventListener('error', (event) => {
+        console.error('Global error:', event.error);
+      });
+    </script>
+  </body>
+</html>
