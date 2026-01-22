@@ -1,6 +1,6 @@
 // src/components/exchange/RateLookup.jsx
 import { useState } from 'react'
-import { Search, ArrowRight } from 'lucide-react'
+import { Search, ArrowRight, Zap } from 'lucide-react'
 import { useExchangeRates } from '../../hooks/useExchangeRates'
 import LoadingSpinner from '../common/LoadingSpinner'
 import ErrorMessage from '../common/ErrorMessage'
@@ -30,85 +30,103 @@ const RateLookup = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Exchange Rate Lookup</h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1">
-              <label htmlFor="fromCurrency" className="block text-sm font-medium text-gray-700 mb-1">
-                From Currency
-              </label>
-              <input
-                type="text"
-                id="fromCurrency"
-                value={fromCurrency}
-                onChange={(e) => setFromCurrency(e.target.value.toUpperCase())}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="e.g., EUR"
-                maxLength={3}
-                required
-              />
+    <div className="w-full flex items-center justify-center">
+      <div className="w-full max-w-2xl">
+        <div className="card card-section">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+              <Zap className="w-6 h-6 text-white" />
             </div>
-            
-            <button
-              type="button"
-              onClick={swapCurrencies}
-              className="mt-6 p-2 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <ArrowRight className="w-5 h-5" />
-            </button>
-            
-            <div className="flex-1">
-              <label htmlFor="toCurrency" className="block text-sm font-medium text-gray-700 mb-1">
-                To Currency
-              </label>
-              <input
-                type="text"
-                id="toCurrency"
-                value={toCurrency}
-                onChange={(e) => setToCurrency(e.target.value.toUpperCase())}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="e.g., USD"
-                maxLength={3}
-                required
-              />
+            <div>
+              <h2 className="section-title mb-0">Exchange Rate Lookup</h2>
+              <p className="section-subtitle">Check the latest conversion rates</p>
             </div>
           </div>
           
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex justify-center items-center px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? (
-              <LoadingSpinner size="small" />
-            ) : (
-              <>
-                <Search className="w-4 h-4 mr-2" />
-                Get Exchange Rate
-              </>
-            )}
-          </button>
-        </form>
-
-        {error && (
-          <ErrorMessage message={error} onRetry={handleSubmit} />
-        )}
-
-        {rate && !loading && (
-          <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-green-900">
-                1 {rate.baseCurrency} = {rate.rate.toFixed(6)} {rate.targetCurrency}
-              </p>
-              <p className="text-green-700 text-sm mt-1">
-                Last updated: {new Date(rate.date).toLocaleDateString()}
-              </p>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+              <div>
+                <label htmlFor="fromCurrency" className="block text-sm font-semibold text-gray-700 mb-2">
+                  From Currency
+                </label>
+                <input
+                  type="text"
+                  id="fromCurrency"
+                  value={fromCurrency}
+                  onChange={(e) => setFromCurrency(e.target.value.toUpperCase())}
+                  className="input-field"
+                  placeholder="e.g., EUR"
+                  maxLength={3}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="toCurrency" className="block text-sm font-semibold text-gray-700 mb-2">
+                  To Currency
+                </label>
+                <input
+                  type="text"
+                  id="toCurrency"
+                  value={toCurrency}
+                  onChange={(e) => setToCurrency(e.target.value.toUpperCase())}
+                  className="input-field"
+                  placeholder="e.g., USD"
+                  maxLength={3}
+                  required
+                />
+              </div>
             </div>
-          </div>
-        )}
+
+            <button
+              type="button"
+              onClick={swapCurrencies}
+              className="w-full py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-300 font-semibold flex items-center justify-center gap-2"
+              title="Swap currencies"
+            >
+              <ArrowRight className="w-4 h-4" />
+              Swap
+            </button>
+            
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full flex justify-center items-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <LoadingSpinner size="small" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Search className="w-5 h-5" />
+                  Get Exchange Rate
+                </>
+              )}
+            </button>
+          </form>
+
+          {error && (
+            <div className="animate-fade-in">
+              <ErrorMessage message={error} onRetry={handleSubmit} />
+            </div>
+          )}
+
+          {rate && !loading && (
+            <div className="animate-fade-in">
+              <div className="p-6 md:p-8 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl text-center space-y-3">
+                <p className="text-sm font-semibold text-green-600 uppercase tracking-widest">Current Rate</p>
+                <p className="text-3xl md:text-4xl font-bold text-gray-900">
+                  1 <span className="text-green-600">{rate.baseCurrency}</span> = <span className="text-green-600">{rate.rate.toFixed(6)}</span> {rate.targetCurrency}
+                </p>
+                <p className="text-sm text-gray-600 font-medium">
+                  Last updated: {new Date(rate.date).toLocaleDateString()} at {new Date(rate.date).toLocaleTimeString()}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
