@@ -3,7 +3,10 @@ package com.ExchangeApp.project.service;
 import com.ExchangeApp.project.model.ConversionResult;
 import com.ExchangeApp.project.model.CurrencyRequest;
 import com.ExchangeApp.project.model.ExchangeRate;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -17,22 +20,27 @@ import java.util.stream.Collectors;
 
 @Service
 public class ExchangeRateService {
-    private final Map<String, BigDecimal> eurRates = new ConcurrentHashMap<>();
+    private Map<String, BigDecimal> eurRates = new ConcurrentHashMap<>();
     private final Map<String, Integer> currencyRequestCount = new ConcurrentHashMap<>();
     private final RestTemplate restTemplate;
+    private ECBRateFetcherService rateFetcherService;
 
-    public ExchangeRateService(RestTemplateBuilder restTemplateBuilder) {
+    public ExchangeRateService(RestTemplateBuilder restTemplateBuilder, ECBRateFetcherService rateFetcherService) {
         this.restTemplate = restTemplateBuilder.build();
+        this.rateFetcherService = rateFetcherService;
         initializeRates();
     }
 
     private void initializeRates() {
         // Initial rates (would fetch from ECB in real implementation)
-        eurRates.put("USD", new BigDecimal("1.0850"));
-        eurRates.put("GBP", new BigDecimal("0.8550"));
-        eurRates.put("HUF", new BigDecimal("385.50"));
-        eurRates.put("JPY", new BigDecimal("157.80"));
-        eurRates.put("CHF", new BigDecimal("0.9550"));
+        eurRates = rateFetcherService.fetchDailyRates();
+        if (eurRates.isEmpty()) {
+            eurRates.put("USD", new BigDecimal("1.0850"));
+            eurRates.put("GBP", new BigDecimal("0.8550"));
+            eurRates.put("HUF", new BigDecimal("385.50"));
+            eurRates.put("JPY", new BigDecimal("157.80"));
+            eurRates.put("CHF", new BigDecimal("0.9550"));
+        }
     }
 
     public ExchangeRate getExchangeRate(String fromCurrency, String toCurrency) {
@@ -83,6 +91,8 @@ public class ExchangeRateService {
 
     // Method to refresh rates from ECB (would be implemented with scheduled task)
     public void refreshRates() {
-        // Implementation to fetch latest rates from ECB API
+        Map<String, BigDecimal> newRates = rateFetcherService.fetchDailyRates();
+        eurRates.clear();
+        eurRates.putAll(newRates);
     }
 }

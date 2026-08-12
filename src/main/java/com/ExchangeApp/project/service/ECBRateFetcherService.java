@@ -4,12 +4,21 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
+import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 @Service
 public class ECBRateFetcherService {
@@ -25,34 +34,62 @@ public class ECBRateFetcherService {
     public Map<String, BigDecimal> fetchDailyRates() {
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(ECB_DAILY_RATES_URL, String.class);
+            System.out.println(response.getBody());
             return parseECBXmlRates(response.getBody());
         } catch (Exception e) {
             throw new RuntimeException("Failed to fetch ECB rates", e);
         }
     }
 
-    private Map<String, BigDecimal> parseECBXmlRates(String xmlContent) {
-        Map<String, BigDecimal> rates = new HashMap<>();
+    // private Map<String, BigDecimal> parseECBXmlRates(String xmlContent) {
+    //     Map<String, BigDecimal> rates = new ConcurrentHashMap<>();
+    //     rates.put("EUR", BigDecimal.ONE); // Base currency
+
+    //     try {
+    //         // Simple XML parsing (in real implementation, use proper XML parser)
+    //         String[] lines = xmlContent.split("\n");
+    //         for (String line : lines) {
+    //             if (line.contains("currency=") && line.contains("rate=")) {
+    //                 String currency = extractValue(line, "currency");
+    //                 String rateStr = extractValue(line, "rate");
+    //                 if (currency != null && rateStr != null) {
+    //                     rates.put(currency, new BigDecimal(rateStr));
+    //                 }
+    //             }
+    //         }
+    //     } catch (Exception e) {
+    //         throw new RuntimeException("Failed to parse ECB XML rates", e);
+    //     }
+
+    //     return rates;
+    // }
+    private Map<String, BigDecimal>  parseECBXmlRates(String xmlContent) {
+        Map<String, BigDecimal> rates = new ConcurrentHashMap<>();
         rates.put("EUR", BigDecimal.ONE); // Base currency
 
         try {
-            // Simple XML parsing (in real implementation, use proper XML parser)
-            String[] lines = xmlContent.split("\n");
-            for (String line : lines) {
-                if (line.contains("currency=") && line.contains("rate=")) {
-                    String currency = extractValue(line, "currency");
-                    String rateStr = extractValue(line, "rate");
-                    if (currency != null && rateStr != null) {
-                        rates.put(currency, new BigDecimal(rateStr));
-                    }
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            // Prevent XXE attacks
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8)));
+            NodeList cubeNodes = doc.getElementsByTagName("Cube");
+            for (int i = 0; i < cubeNodes.getLength(); i++) {
+                Element element = (Element) cubeNodes.item(i);
+                if (element.hasAttribute("currency") && element.hasAttribute("rate")) {
+                    String currency = element.getAttribute("currency");
+                    String rateStr = element.getAttribute("rate");
+                    rates.put(currency, new BigDecimal(rateStr));
                 }
             }
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse ECB XML rates", e);
         }
-
         return rates;
     }
+
+
 
     private String extractValue(String line, String attribute) {
         Pattern pattern = Pattern.compile(attribute + "=\"([^\"]+)\"");
