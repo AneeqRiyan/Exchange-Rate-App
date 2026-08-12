@@ -67,4 +67,10 @@ public class ExchangeRateController {
                     "Unsupported currency: " + currency);
         }
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshRates() {
+        exchangeRateService.refreshRates();
+        return ResponseEntity.ok("Rates refreshed successfully");
+    }
 }
