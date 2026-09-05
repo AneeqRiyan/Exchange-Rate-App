@@ -36,10 +36,16 @@ const Header = () => {
             
             <div className="flex items-center gap-4">
               {lastUpdated && (
-                <div className="hidden sm:block p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <span className="inline-flex w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                    <span className="font-medium">Updated: {new Date(lastUpdated).toLocaleDateString()}</span>
+                <div className="hidden sm:block px-3 py-2 bg-blue-50/80 border border-blue-200/80 rounded-xl text-xs text-gray-700">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    {lastUpdated.ecbRateDate ? (
+                      <span>
+                        <strong className="font-semibold text-gray-900">ECB Date:</strong> {lastUpdated.ecbRateDate} · <span className="text-gray-500">Refreshed {new Date(lastUpdated.lastRefreshed).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </span>
+                    ) : (
+                      <span className="font-medium">Updated: {new Date(lastUpdated).toLocaleDateString()}</span>
+                    )}
                   </div>
                 </div>
               )}

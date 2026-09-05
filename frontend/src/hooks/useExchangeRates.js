@@ -7,6 +7,10 @@ export const useExchangeRates = () => {
   const [error, setError] = useState(null)
   const [lastUpdated, setLastUpdated] = useState(null)
 
+  const extractErrorMessage = (err, defaultMessage) => {
+    return err.response?.data?.message || err.response?.data?.error || err.message || defaultMessage
+  }
+
   const getRate = async (fromCurrency, toCurrency) => {
     setLoading(true)
     setError(null)
@@ -14,7 +18,7 @@ export const useExchangeRates = () => {
       const response = await exchangeRateAPI.getExchangeRate(fromCurrency, toCurrency)
       return response.data
     } catch (err) {
-      const message = err.response?.data?.error || 'Failed to fetch exchange rate'
+      const message = extractErrorMessage(err, 'Failed to fetch exchange rate')
       setError(message)
       throw new Error(message)
     } finally {
@@ -29,7 +33,7 @@ export const useExchangeRates = () => {
       const response = await exchangeRateAPI.convertAmount(fromCurrency, toCurrency, amount)
       return response.data
     } catch (err) {
-      const message = err.response?.data?.error || 'Failed to convert amount'
+      const message = extractErrorMessage(err, 'Failed to convert amount')
       setError(message)
       throw new Error(message)
     } finally {
@@ -44,7 +48,7 @@ export const useExchangeRates = () => {
       const response = await exchangeRateAPI.getSupportedCurrencies()
       return response.data
     } catch (err) {
-      const message = err.response?.data?.error || 'Failed to fetch currencies'
+      const message = extractErrorMessage(err, 'Failed to fetch currencies')
       setError(message)
       throw new Error(message)
     } finally {
@@ -61,7 +65,7 @@ export const useExchangeRates = () => {
       const response = await exchangeRateAPI.getLastUpdated()
       setLastUpdated(response.data)
     } catch (err) {
-      const message = err.response?.data?.error || 'Failed to refresh rates'
+      const message = extractErrorMessage(err, 'Failed to refresh rates')
       setError(message)
       throw new Error(message)
     } finally {
@@ -75,7 +79,7 @@ export const useExchangeRates = () => {
         const response = await exchangeRateAPI.getLastUpdated()
         setLastUpdated(response.data)
       } catch (err) {
-        console.error('Failed to fetch last updated time:', err)
+        console.warn('Could not fetch last updated time (backend may still be starting):', err.message)
       }
     }
     fetchLastUpdated()

@@ -25,6 +25,7 @@ const CurrencyList = () => {
   }, [])
 
   const sortedCurrencies = [...currencies].sort((a, b) => b.requestCount - a.requestCount)
+  const maxCount = Math.max(...sortedCurrencies.map(c => c.requestCount), 1)
   const topCurrencies = sortedCurrencies.slice(0, 3)
 
   const getPopularityColor = (index) => {
@@ -150,7 +151,7 @@ const CurrencyList = () => {
                                 <div
                                   className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-300"
                                   style={{
-                                    width: `${(currency.requestCount / Math.max(...sortedCurrencies.map(c => c.requestCount))) * 100}%`,
+                                    width: `${(currency.requestCount / maxCount) * 100}%`,
                                   }}
                                 ></div>
                               </div>

@@ -121,7 +121,7 @@ const RateLookup = () => {
                   1 <span className="text-green-600">{rate.baseCurrency}</span> = <span className="text-green-600">{rate.rate.toFixed(6)}</span> {rate.targetCurrency}
                 </p>
                 <p className="text-sm text-gray-600 font-medium">
-                  Last updated: {new Date(rate.date).toLocaleDateString()} at {new Date(rate.date).toLocaleTimeString()}
+                  ECB Rate Date: {new Date(rate.date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                 </p>
               </div>
             </div>
