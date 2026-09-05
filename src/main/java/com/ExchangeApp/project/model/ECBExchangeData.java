@@ -5,11 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Map;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CurrencyRequest {
-    private String currency;
-    private int requestCount;
+public class ECBExchangeData {
+    private LocalDate date;
+    private Map<String, BigDecimal> rates;
 }

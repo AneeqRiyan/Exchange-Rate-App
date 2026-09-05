@@ -1,124 +1,87 @@
 package com.ExchangeApp.project.service;
 
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import com.ExchangeApp.project.model.ECBExchangeData;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.w3c.dom.NodeList;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-
-import java.io.ByteArrayInputStream;
-import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Service
 public class ECBRateFetcherService {
     private static final String ECB_DAILY_RATES_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
-    private static final String ECB_HISTORICAL_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml";
 
     private final RestTemplate restTemplate;
 
-    public ECBRateFetcherService(RestTemplateBuilder restTemplateBuilder) {
-        this.restTemplate = restTemplateBuilder.build();
+    public ECBRateFetcherService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
     }
 
-    public Map<String, BigDecimal> fetchDailyRates() {
+    @Cacheable(value = "ecb-rates", key = "'daily-rates'")
+    public ECBExchangeData fetchDailyRates() {
         try {
+            log.info("Fetching daily exchange rates from ECB: {}", ECB_DAILY_RATES_URL);
             ResponseEntity<String> response = restTemplate.getForEntity(ECB_DAILY_RATES_URL, String.class);
-            System.out.println(response.getBody());
+            log.debug("Received response from ECB: status={}", response.getStatusCode());
             return parseECBXmlRates(response.getBody());
         } catch (Exception e) {
+            log.error("Failed to fetch ECB rates from external service: {}", e.getMessage());
             throw new RuntimeException("Failed to fetch ECB rates", e);
         }
     }
 
-    // private Map<String, BigDecimal> parseECBXmlRates(String xmlContent) {
-    //     Map<String, BigDecimal> rates = new ConcurrentHashMap<>();
-    //     rates.put("EUR", BigDecimal.ONE); // Base currency
-
-    //     try {
-    //         // Simple XML parsing (in real implementation, use proper XML parser)
-    //         String[] lines = xmlContent.split("\n");
-    //         for (String line : lines) {
-    //             if (line.contains("currency=") && line.contains("rate=")) {
-    //                 String currency = extractValue(line, "currency");
-    //                 String rateStr = extractValue(line, "rate");
-    //                 if (currency != null && rateStr != null) {
-    //                     rates.put(currency, new BigDecimal(rateStr));
-    //                 }
-    //             }
-    //         }
-    //     } catch (Exception e) {
-    //         throw new RuntimeException("Failed to parse ECB XML rates", e);
-    //     }
-
-    //     return rates;
-    // }
-    private Map<String, BigDecimal>  parseECBXmlRates(String xmlContent) {
+    private ECBExchangeData parseECBXmlRates(String xmlContent) {
         Map<String, BigDecimal> rates = new ConcurrentHashMap<>();
         rates.put("EUR", BigDecimal.ONE); // Base currency
+
+        LocalDate rateDate = LocalDate.now();
 
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             // Prevent XXE attacks
             factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            
+
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8)));
+
             NodeList cubeNodes = doc.getElementsByTagName("Cube");
             for (int i = 0; i < cubeNodes.getLength(); i++) {
                 Element element = (Element) cubeNodes.item(i);
+                if (element.hasAttribute("time")) {
+                    try {
+                        rateDate = LocalDate.parse(element.getAttribute("time"));
+                    } catch (Exception e) {
+                        log.warn("Could not parse ECB date attribute '{}': {}", element.getAttribute("time"), e.getMessage());
+                    }
+                }
                 if (element.hasAttribute("currency") && element.hasAttribute("rate")) {
                     String currency = element.getAttribute("currency");
                     String rateStr = element.getAttribute("rate");
-                    rates.put(currency, new BigDecimal(rateStr));
+                    try {
+                        rates.put(currency, new BigDecimal(rateStr));
+                    } catch (NumberFormatException e) {
+                        log.warn("Invalid rate format for currency {}: {}", currency, rateStr);
+                    }
                 }
             }
         } catch (Exception e) {
+            log.error("Failed to parse ECB XML rates: {}", e.getMessage());
             throw new RuntimeException("Failed to parse ECB XML rates", e);
         }
-        return rates;
-    }
 
-
-
-    private String extractValue(String line, String attribute) {
-        Pattern pattern = Pattern.compile(attribute + "=\"([^\"]+)\"");
-        Matcher matcher = pattern.matcher(line);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        return null;
-    }
-
-    // Alternative method for CSV parsing if needed
-    public Map<String, BigDecimal> parseECBCsvRates(String csvContent) {
-        Map<String, BigDecimal> rates = new HashMap<>();
-        rates.put("EUR", BigDecimal.ONE);
-
-        try {
-            String[] lines = csvContent.split("\n");
-            for (int i = 1; i < lines.length; i++) { // Skip header
-                String[] parts = lines[i].split(",");
-                if (parts.length >= 2) {
-                    String currency = parts[0].trim();
-                    String rateStr = parts[1].trim();
-                    rates.put(currency, new BigDecimal(rateStr));
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse ECB CSV rates", e);
-        }
-
-        return rates;
+        return new ECBExchangeData(rateDate, rates);
     }
 }
